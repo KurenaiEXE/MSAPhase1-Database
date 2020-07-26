@@ -1,0 +1,149 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebApplication1.Data;
+using WebApplication1.Models;
+
+namespace WebApplication1.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class StudentsController : ControllerBase
+    {
+        private readonly StudentContext _context;
+
+        public StudentsController(StudentContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Students
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Student>>> GetStudent()
+        {
+            List<Student> students =  await _context.Student.ToListAsync();
+            List<Address> addresses = await _context.Address.ToListAsync();
+
+            foreach (Student student in students){
+                foreach(Address address in addresses)
+                {
+                    if(address.studentId == student.studentId)
+                    {
+                        student.Addresses.Add(address);
+                    }
+                }
+            }
+            return students;
+            //return await _context.Student.ToListAsync();
+        }
+
+        // GET: api/Students/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Student>> GetStudent(int id)
+        {
+            var student = await _context.Student.FindAsync(id);
+            List<Address> addresses = await _context.Address.ToListAsync();
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+            foreach (Address address in addresses)
+            {
+                if (address.studentId == student.studentId)
+                {
+                    student.Addresses.Add(address);
+                }
+            }
+
+            return student;
+        }
+
+        // PUT: api/Students/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutStudent(int id, Student student)
+        {
+            if (id != student.studentId)
+            {
+                return BadRequest();
+            }
+
+            //_context.Entry(student).State = EntityState.Modified;
+            var studentToUpdate = await _context.Student.FindAsync(id);
+            _context.Entry(studentToUpdate).State = EntityState.Modified;
+            studentToUpdate.firstName = student.firstName;
+            studentToUpdate.middleName = student.middleName;
+            studentToUpdate.lastName = student.lastName;
+            studentToUpdate.emailAddress = student.emailAddress;
+            studentToUpdate.phoneNumber = student.phoneNumber;
+            studentToUpdate.timeCreated = student.timeCreated;
+            studentToUpdate.Addresses = student.Addresses;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!StudentExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // POST: api/Students
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [HttpPost]
+        public async Task<ActionResult<Student>> PostStudent(Student student)
+        {
+            _context.Student.Add(student);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetStudent", new { id = student.studentId }, student);
+        }
+
+        // DELETE: api/Students/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Student>> DeleteStudent(int id)
+        {
+            var student = await _context.Student.FindAsync(id);
+            List<Address> addresses = await _context.Address.ToListAsync();
+
+            if (student == null)
+            {
+                return NotFound();
+            }
+
+            
+            foreach (Address address in addresses)
+            {
+                if (address.studentId == student.studentId)
+                {
+                    student.Addresses.Remove(address);
+                }
+            }
+            _context.Student.Remove(student);
+            await _context.SaveChangesAsync();
+            return student;
+        }
+
+        private bool StudentExists(int id)
+        {
+            return _context.Student.Any(e => e.studentId == id);
+        }
+    }
+}

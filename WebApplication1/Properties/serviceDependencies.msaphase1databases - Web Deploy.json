@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "mssql1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroup')]/providers/Microsoft.Sql/servers/msaphase1databases/databases/msaphase1database",
+      "type": "mssql.azure",
+      "connectionId": "schoolSIMSConnection",
+      "secretStore": "AzureAppSettings"
+    }
+  }
+}
